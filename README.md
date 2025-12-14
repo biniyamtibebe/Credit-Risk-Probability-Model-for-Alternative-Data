@@ -4,52 +4,161 @@
 
 - Develop a robust credit risk probability model using alternative eCommerce transaction data to enable safe buy-now-pay-later services for Bati Bank's partner platform.  
 
+_____
+
+# Credit Risk Probability Model for Alternative Data
+
 ---
-# Influence of Basel II Accord on Model Interpretability and Documentation
+## Project Overview
+This project builds an end-to-end **credit risk scoring system** for Bati Bank to support a **Buy-Now-Pay-Later (BNPL)** product using alternative eCommerce transaction data.  
+The objective is to transform customer behavioral data into a **probability of default**, a **credit score**, and **loan recommendations** in a compliant and reproducible way.
 
-## How does the Basel II Accord’s emphasis on risk measurement influence our need for an interpretable and well-documented model?
+---
 
-The Basel II Accord, established by the Basel Committee on Banking Supervision, introduces a three-pillar framework to enhance banking stability:
+## 🎯 Task 1 — Credit Scoring Business Understanding
 
-- **Pillar 1:** Sets minimum capital requirements based on risk-weighted assets.
-- **Pillar 2:** Involves supervisory review processes.
-- **Pillar 3:** Promotes market discipline through disclosure.
+### 1. Basel II & Model Interpretability
+The **Basel II Capital Accord** requires financial institutions to:
+- Quantify credit risk accurately
+- Maintain **transparent, auditable, and well-documented models**
+- Hold sufficient capital based on measured risk
 
-Its emphasis on risk-sensitive measurement, particularly through the Internal Ratings-Based (IRB) approach, allows banks to use internal models for estimating Probability of Default (PD), but requires these models to be robust, validated, and transparent.
+Because of this, our credit scoring model must be:
+- **Interpretable** (clear drivers of risk)
+- **Reproducible** (same inputs → same outputs)
+- **Well-documented** (for audit and regulatory review)
 
-This influences our project by necessitating an interpretable model (e.g., allowing stakeholders to understand how features contribute to risk scores) to facilitate regulatory approval, supervisory audits, and compliance. A well-documented model ensures traceability of decisions, supports Pillar 2 reviews, and aligns with incentives for improved risk management, ultimately reducing capital charges while maintaining financial stability.
+This strongly influences model choice, feature design, and reporting.
 
-## Necessity of Creating a Proxy Variable
+---
 
-Since we lack a direct "default" label, why is creating a proxy variable necessary, and what are the potential business risks of making predictions based on this proxy?
+### 2. Why a Proxy Default Variable Is Required
+The dataset does **not include an explicit default label**.  
+To proceed, we define a **proxy default variable** using customer behavior patterns such as:
+- Transaction **Recency**
+- Transaction **Frequency**
+- Transaction **Monetary value** (RFM)
 
-In the absence of a direct "default" label, which is common in alternative data scenarios like eCommerce behavioral patterns, creating a proxy variable (e.g., derived from Recency, Frequency, Monetary, and Standard Deviation—RFMS—metrics in transaction data) is essential to categorize customers as high-risk (bad) or low-risk (good). 
+Customers with risky behavioral patterns are labeled as **high risk**, while stable customers are labeled **low risk**.
 
-This proxy serves as a surrogate target for training supervised models, enabling the transformation of observable behaviors into predictive risk signals for creditworthiness assessment. Without it, model development would be infeasible, as there's no ground truth for default outcomes.
+⚠️ **Business Risk**:  
+Since this is a proxy and not a true default label:
+- Some customers may be misclassified
+- Conservative thresholds and continuous monitoring are required
+- Model outputs should support decisions, not replace human judgment
 
-However, relying on a proxy introduces business risks, including:
-- **Misalignment with True Default Behavior:** Leading to inaccurate risk predictions and potential misclassification of borrowers.
-- **Approval of High-Risk Loans:** This can increase default rates and financial losses.
-- **Rejection of Low-Risk Loans:** This may reduce revenue and market share.
-- **Data Biases:** These can amplify unfair outcomes.
-- **Regulatory Non-Compliance:** If the proxy lacks validation.
-- **Reputational Damage:** From erroneous decisions.
-- **Operational Challenges:** Like model overfitting or poor generalization in real-world scenarios.
+---
 
-## Trade-offs Between Simple and Complex Models
+### 3. Simple vs Complex Models — Key Trade-offs
 
-What are the key trade-offs between using a simple, interpretable model (like Logistic Regression with WoE) versus a complex, high-performance model (like Gradient Boosting) in a regulated financial context?
+| Aspect | Interpretable Models (Logistic Regression, WoE) | Complex Models (XGBoost, Random Forest) |
+|------|-----------------------------------------------|----------------------------------------|
+| Interpretability | High | Medium–Low |
+| Regulatory Acceptance | Strong | Moderate |
+| Predictive Power | Moderate | High |
+| Explainability | Clear coefficients | Requires SHAP/LIME |
+| Production Risk | Low | Higher |
 
-In a regulated financial environment, simple models like Logistic Regression with Weight of Evidence (WoE) offer high interpretability, making it easier to explain predictions (e.g., via coefficients showing feature impacts on default probability), validate against regulatory standards (e.g., Basel II's IRB requirements), and ensure fairness/transparency for audits and consumer disclosures. 
+**Project Approach**:
+- Start with interpretable models for baseline compliance
+- Use advanced models for performance comparison
+- Apply **SHAP** to explain complex model behavior
 
-These models are:
-- **Computationally Efficient:** Require less data and reduce risks of overfitting.
-- **Potential Downsides:** May underperform on complex, non-linear patterns, leading to lower predictive accuracy and potentially higher capital requirements due to conservative risk estimates.
+---
 
-Conversely, complex models like Gradient Boosting provide superior performance by capturing intricate relationships in large datasets, improving AUC metrics and enabling better risk differentiation for profitability. However, they are often black-box models, complicating interpretability. This heightens risks of undetected biases, regulatory scrutiny (e.g., under Pillar 2 for model risk management), and challenges in explaining decisions to stakeholders.
+## ✅ Outcome of Task 1
+- Clear business understanding aligned with Basel II
+- Justified use of proxy default variable
+- Defined modeling philosophy balancing risk, performance, and regulation
 
-### Summary of Trade-offs
+---
+## 📂 Repository Structure
+        credit-risk-model/
 
-The trade-offs thus center on balancing:
-- **Accuracy and Efficiency** vs. **Compliance, Explainability, and Ethical Considerations.**
-- Simple models prioritize regulatory alignment and trust, while complex ones favor predictive power but demand additional tools (e.g., SHAP or LIME) for post-hoc interpretability to mitigate opacity.
+             ├── .github/workflows/ci.yml   # For CI/CD
+             ├── data/                       # add this folder to .gitignore
+             │   ├── raw/                   # Raw data goes here 
+             │   └── processed/             # Processed data for training   
+             ├── notebooks/
+             │   └── eda.ipynb          # Exploratory, one-off analysis
+             ├── src/
+             │   ├── __init__.py
+             │   ├── data_processing.py     # Script for feature engineering
+             │   ├── train.py               # Script for model training
+             │   ├── predict.py             # Script for inference
+             │   └── api/
+             │       ├── main.py            # FastAPI application
+             │       └── pydantic_models.py # Pydantic models for API
+             ├── tests/
+             │   └── test_data_processing.py # Unit tests
+             ├── Dockerfile
+             ├── docker-compose.yml
+             ├── requirements.txt
+             ├── .gitignore
+             └── README.md
+
+____
+# Task 2 – Exploratory Data Analysis (EDA)
+
+## Objective
+The goal of this task is to explore the dataset to uncover patterns, identify data quality issues, and form hypotheses that will guide your feature engineering for modeling.
+
+All exploratory work is performed in the Jupyter Notebook:  
+`notebooks/eda.ipynb`  
+
+> **Note:** This notebook is for exploration only and is not intended for production code.
+
+---
+
+## Instructions
+
+### 1. Overview of the Data
+- Understand the structure of the dataset:
+  - Number of rows and columns
+  - Data types of each feature
+  - Sample records to inspect values
+
+### 2. Summary Statistics
+- Compute descriptive statistics for numerical features:
+  - Mean, median, standard deviation
+  - Minimum, maximum, quartiles
+- Identify general trends and distributions in the data
+
+### 3. Distribution of Numerical Features
+- Visualize numerical features using:
+  - Histograms
+  - Density plots
+- Identify patterns, skewness, and potential outliers
+
+### 4. Distribution of Categorical Features
+- Analyze categorical features using:
+  - Bar plots
+  - Frequency tables
+- Gain insights into category distribution and variability
+
+### 5. Correlation Analysis
+- Examine relationships between numerical features using:
+  - Correlation matrices
+  - Heatmaps
+- Identify strongly correlated variables
+
+### 6. Identifying Missing Values
+- Detect missing or null values in the dataset
+- Decide on appropriate strategies for handling missing data:
+  - Imputation (mean, median, mode)
+  - Removal or domain-specific handling
+
+### 7. Outlier Detection
+- Use box plots and scatter plots to identify outliers
+- Determine if outliers require transformation, capping, or removal
+
+---
+
+
+
+
+
+
+
+
+
