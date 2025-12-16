@@ -155,6 +155,178 @@ All exploratory work is performed in the Jupyter Notebook:
 ---
 
 
+## Task 3 – Feature Engineering & Proxy Target Creation
+
+### Objective
+
+Create meaningful customer-level features from raw transaction data and define a **proxy target variable** for credit risk in the absence of a true default label.
+
+### Key Steps
+
+1. **Aggregate transactions at customer level**
+
+   * Transaction frequency
+   * Total and average transaction amount
+   * Recency (days since last transaction)
+
+2. **RFM Feature Construction**
+
+   * **Recency**: Days since last transaction
+   * **Frequency**: Number of transactions
+   * **Monetary**: Total transaction value
+
+3. **Proxy Target Definition**
+
+   * Customers with *low activity, low value, and long inactivity* are labeled as **high risk**
+   * Binary target:
+
+     * `1` → High risk
+     * `0` → Low risk
+
+### Output
+
+* Processed dataset saved to:
+
+  ```
+  data/processed/customer_features.csv
+  ```
+
+This dataset is the input for model training.
+
+---
+
+## Task 4 – Model Training & Evaluation
+
+### Objective
+
+Train machine learning models to predict probability of credit risk and evaluate their performance.
+
+### Models Used
+
+* Logistic Regression (baseline)
+* Random Forest / Gradient Boosting (final model)
+
+### Training Pipeline
+
+* Train/validation split
+* Feature scaling (where applicable)
+* Class imbalance handling
+* Hyperparameter tuning
+
+### Evaluation Metrics
+
+* ROC-AUC (primary metric)
+* Accuracy
+* Precision / Recall
+* Confusion Matrix
+
+### Output
+
+* Trained model object
+* Evaluation metrics logged to MLflow
+
+---
+
+## Task 5 – Experiment Tracking with MLflow
+
+### Objective
+
+Ensure reproducibility and traceability of experiments.
+
+### What is Tracked
+
+* Model parameters
+* Performance metrics
+* Feature schema
+* Model artifacts
+
+### MLflow Setup
+
+* Local MLflow tracking server
+* SQLite backend store
+* Model registered as:
+
+  ```
+  CreditRiskModel
+  ```
+
+Each experiment run is versioned and can be compared via the MLflow UI.
+
+---
+
+## Task 6 – Model Deployment (FastAPI Inference Service)
+
+### Objective
+
+Expose the trained credit risk model as a REST API for real-time inference.
+
+### API Overview
+
+* Framework: **FastAPI**
+* Server: **Uvicorn**
+* Endpoint:
+
+  ```
+  POST /predict
+  ```
+
+### Request Format
+
+```json
+{
+  "feature_1": value,
+  "feature_2": value,
+  "feature_n": value
+}
+```
+
+### Response Format
+
+```json
+{
+  "risk_probability": 0.27,
+  "credit_score": 705,
+  "loan_offer": {
+    "approved": true,
+    "max_amount": 120000,
+    "interest_rate": 15.2
+  }
+}
+```
+
+### Model Loading
+
+The API loads the model directly from MLflow Model Registry using a specific version:
+
+```python
+models:/CreditRiskModel/<version>
+```
+
+### How to Run the API
+
+```bash
+uvicorn src.api.main:app --reload --port 8000
+```
+
+Then open:
+
+```
+http://127.0.0.1:8000/docs
+```
+
+for interactive testing.
+
+---
+
+
+## Notes
+
+* The proxy target is a modeling assumption and should be replaced with real default data when available.
+* All steps are reproducible and aligned with real-world credit risk modeling workflows.
+
+---
+
+
 
 
 
