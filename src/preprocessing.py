@@ -1,22 +1,29 @@
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder
+from typing import List
 
-def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
+def build_preprocessor(
+    numeric_features: List[str],
+    categorical_features: List[str]
+) -> ColumnTransformer:
+    
+    numeric_pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler())
+    ])
 
-    # --- Datetime ---
-    df["TransactionStartTime"] = pd.to_datetime(
-        df["TransactionStartTime"], utc=True, errors="coerce"
-    )
+    categorical_pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("encoder", OneHotEncoder(handle_unknown="ignore"))
+    ])
 
-    # --- Categorical casting ---
-    df["CountryCode"] = df["CountryCode"].astype("category")
-    df["CurrencyCode"] = df["CurrencyCode"].astype("category")
+    preprocessor = ColumnTransformer([
+        ("num", numeric_pipeline, numeric_features),
+        ("cat", categorical_pipeline, categorical_features)
+    ])
 
-    # --- Amount handling ---
-    df["Amount"] = pd.to_numeric(df["Amount"], errors="coerce")
-    df["Value"] = df["Amount"].abs()
-
-    # --- Missing handling ---
-    df = df.dropna(subset=["TransactionStartTime", "Amount"])
-
-    return df
+    return preprocessor
